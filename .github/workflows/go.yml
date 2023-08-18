@@ -1,28 +1,45 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: CI
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-jobs:
-
+name: Java CI
+on: push
+jobs:   
+  Clone-down:
+    name: Clone down repo
+    runs-on: ubuntu-latest
+    container: gradle:6-jdk11
+    steps:
+    - uses: actions/checkout@v2
+    - name: Upload Repo
+      uses: actions/upload-artifact@v2
+      with:
+        name: code
+        path: .
+  
   build:
+    name: "Build"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - name: Clone-down
+        uses: actions/checkout@v2
+      - name: Build frontend
+        run: cd frontend && go build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: frontend
+          path: frontend
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.20'
+  test: 
+    name: "Test frontend"
+    runs-on: ubuntu-latest
+    needs:  'build'   
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v2
+        with:
+            name: frontend
+            path: frontend 
+      - name: Test the code 
+        run:  cd frontend && go test
 
-    - name: Build
-      run: go build -v ./...
 
-    - name: Test
-      run: go test -v ./...
+

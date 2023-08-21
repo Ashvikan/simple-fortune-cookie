@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches:
@@ -7,8 +8,10 @@ on:
     types: [opened, reopened]
     branches:
       - main
+
 env:
   UBUNTU_VERSION: "22.04"
+
 jobs:
   clone_down:
     name: Clone down repo
@@ -17,52 +20,60 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
     - name: Upload frontend
-      uses: actions/upload-repo@v2
+      uses: actions/upload-artifact@v2
       with:
         name: frontend
         path: ./frontend
     - name: Upload backend
-      uses: actions/upload-repo@v2
+      uses: actions/upload-artifact@v2
       with:
         name: backend
         path: ./backend
+
   build_frontend:
     name: Build frontend
-    needs: Clone-down
+    needs: clone_down
     runs-on: "ubuntu-${{ UBUNTU_VERSION }}"
     steps:
     - name: Download frontend
       uses: actions/download-artifact@v2
       with:
         name: frontend
-        path: .
+        path: frontend
+
     - name: Build frontend
       run: |
-        git mod tidy &&
-        git mod download
-        git build
+        cd frontend
+        npm install
+        npm run build
+
     - name: Upload frontend build
       uses: actions/upload-artifact@v2
       with:
-        name: frontend
-        path: .
+        name: frontend-build
+        path: frontend/build
+
   build_backend:
-    name: Build frontend
-    needs: Clone-down
+    name: Build backend
+    needs: clone_down
     runs-on: "ubuntu-${{ UBUNTU_VERSION }}"
     steps:
-    - name: Download frontend
+    - name: Download backend
       uses: actions/download-artifact@v2
       with:
         name: backend
-        path: .
-    - name: Build frontend
+        path: backend
+
+    - name: Build backend
       run: |
-        git mod tidy &&
-        git mod download
-        git build
+        cd backend
+        go mod tidy
+        go mod download
+        go build
+
     - name: Upload backend build
       uses: actions/upload-artifact@v2
       with:
-        name: backend
-        path: .
+        name: backend-build
+        path: backend
+
